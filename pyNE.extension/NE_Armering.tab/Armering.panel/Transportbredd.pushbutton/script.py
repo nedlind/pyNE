@@ -5,6 +5,9 @@ __author__ = "Niklas Edlind"
 from Autodesk.Revit import DB
 from Autodesk.Revit.DB import Structure, UnitUtils
 from Autodesk.Revit.UI.Selection import *
+from pyrevit import script
+
+output = script.get_output()
 
 uidoc = __revit__.ActiveUIDocument
 doc = uidoc.Document
@@ -39,6 +42,8 @@ def unit_from_internal(doc, value):
 #prompt selection of dimension to align to
 stirrup_selection = uidoc.Selection.PickObjects(ObjectType.Element, CustomISelectionFilter("Structural Rebar"),"Pick stirrup to check")
 
+transport_widths = []
+
 for sel in stirrup_selection:
     stirrup = doc.GetElement(sel.ElementId)
     bar_curves = stirrup.GetCenterlineCurves(1,1,1,0,0)
@@ -69,4 +74,8 @@ for sel in stirrup_selection:
             
         dims.append(max(dist))
 			
-    print(unit_from_internal(doc, min(dims)))
+    #print(unit_from_internal(doc, min(dims)))
+    transport_widths.append((sel.ElementId, min(dims)))
+    
+for t in transport_widths:
+    print('{} {} m'.format(output.linkify(t[0]), t[1]))
