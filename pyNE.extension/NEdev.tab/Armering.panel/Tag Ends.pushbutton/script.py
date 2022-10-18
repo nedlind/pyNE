@@ -75,4 +75,7 @@ for bar_ref in stirrup_selection:
                                
 t.Commit()
             
+#   TODO
+#   Create icon
+#   Allow script to run from selection of rebar and/or mra tag
 			
