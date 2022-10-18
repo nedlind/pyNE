@@ -12,12 +12,7 @@ active_view = doc.GetElement(active_view_id)
 
 
 rebar_collector = DB.FilteredElementCollector(doc, active_view_id)\
-                    .OfCategory(DB.BuiltInCategory.OST_Rebar) 
-
-clear_override_settings = DB.OverrideGraphicSettings()\
-                        .SetProjectionLineColor(DB.Color.InvalidColorValue)\
-                        .SetProjectionLineWeight(DB.OverrideGraphicSettings.InvalidPenNumber)\
-                        .SetCutBackgroundPatternColor(DB.Color.InvalidColorValue)                    
+                    .OfCategory(DB.BuiltInCategory.OST_Rebar)                  
 
 t = Transaction(doc, 'Show Untagged')
 t.Start()
@@ -25,6 +20,11 @@ t.Start()
 for b in rebar_collector:
      
     #clear override on all rebar 
+    previous_override_settings = active_view.GetElementOverrides(b.Id)
+    clear_override_settings = DB.OverrideGraphicSettings(previous_override_settings)\
+                        .SetProjectionLineColor(DB.Color.InvalidColorValue)\
+                        .SetProjectionLineWeight(DB.OverrideGraphicSettings.InvalidPenNumber)\
+                        .SetCutBackgroundPatternColor(DB.Color.InvalidColorValue)    
     active_view.SetElementOverrides(b.Id, clear_override_settings)
                              
 t.Commit()

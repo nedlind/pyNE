@@ -17,11 +17,7 @@ active_view = doc.GetElement(active_view_id)
 
 rebar_collector = DB.FilteredElementCollector(doc, active_view_id)\
                     .OfCategory(DB.BuiltInCategory.OST_Rebar) 
-
-clear_override_settings = DB.OverrideGraphicSettings()\
-                        .SetProjectionLineColor(DB.Color.InvalidColorValue)\
-                        .SetProjectionLineWeight(DB.OverrideGraphicSettings.InvalidPenNumber)\
-                        .SetCutBackgroundPatternColor(DB.Color.InvalidColorValue)                    
+                
 untagged_ids = []
 
 t = Transaction(doc, 'Show Untagged')
@@ -37,17 +33,28 @@ for b in rebar_collector:
         untagged_ids.append(b.Id)
         
     #clear override on all rebar first
+    previous_override_settings = active_view.GetElementOverrides(b.Id)
+    clear_override_settings = DB.OverrideGraphicSettings(previous_override_settings)\
+                        .SetProjectionLineColor(DB.Color.InvalidColorValue)\
+                        .SetProjectionLineWeight(DB.OverrideGraphicSettings.InvalidPenNumber)\
+                        .SetCutBackgroundPatternColor(DB.Color.InvalidColorValue)    
     active_view.SetElementOverrides(b.Id, clear_override_settings)
 
 color = DB.Color(255,0,0)
 
-override_settings = DB.OverrideGraphicSettings()\
+for i in untagged_ids:  
+    previous_override_settings = active_view.GetElementOverrides(b.Id)     
+    new_override_settings = DB.OverrideGraphicSettings(previous_override_settings)\
                         .SetProjectionLineColor(color)\
                         .SetProjectionLineWeight(4)\
-                        .SetCutBackgroundPatternColor(color)
-
-for i in untagged_ids:                     
-    active_view.SetElementOverrides(i, override_settings)
+                        .SetCutBackgroundPatternColor(color)              
+    active_view.SetElementOverrides(i, new_override_settings)
+    
                              
 t.Commit()
 
+# TODO
+#   Check if tags belong to active view
+#   Create icon
+#   Add cut bar override
+#   Handle existing overrides
