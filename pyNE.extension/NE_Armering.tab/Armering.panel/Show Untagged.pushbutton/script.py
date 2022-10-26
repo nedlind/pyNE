@@ -35,19 +35,15 @@ for b in rebar_collector:
     #clear override on all rebar first
     previous_override_settings = active_view.GetElementOverrides(b.Id)
     clear_override_settings = DB.OverrideGraphicSettings(previous_override_settings)\
-                        .SetProjectionLineColor(DB.Color.InvalidColorValue)\
-                        .SetProjectionLineWeight(DB.OverrideGraphicSettings.InvalidPenNumber)\
-                        .SetCutBackgroundPatternColor(DB.Color.InvalidColorValue)    
+                        .SetProjectionLineColor(DB.Color.InvalidColorValue)  
     active_view.SetElementOverrides(b.Id, clear_override_settings)
 
 color = DB.Color(255,0,0)
 
 for i in untagged_ids:  
-    previous_override_settings = active_view.GetElementOverrides(b.Id)     
+    previous_override_settings = active_view.GetElementOverrides(i)     
     new_override_settings = DB.OverrideGraphicSettings(previous_override_settings)\
-                        .SetProjectionLineColor(color)\
-                        .SetProjectionLineWeight(4)\
-                        .SetCutBackgroundPatternColor(color)              
+                        .SetProjectionLineColor(color)         
     active_view.SetElementOverrides(i, new_override_settings)
     
                              
