@@ -57,4 +57,3 @@ t.Commit()
 #   Check if tags belong to active view
 #   Create icon
 #   Add cut bar override
-#   Handle existing overrides
