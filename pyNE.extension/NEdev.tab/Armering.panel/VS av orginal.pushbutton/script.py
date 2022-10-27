@@ -47,7 +47,7 @@ rebar_type = doc.GetElement(rebar_original.GetTypeId())
 L = rebar_original.LookupParameter("a").AsDouble()
 
 # Get bar diameter
-d = doc, rebar_type.LookupParameter("Bar Diameter").AsDouble()
+d = rebar_type.LookupParameter("Bar Diameter").AsDouble()
 
 # Get bar spacing
 s = rebar_original.LookupParameter("Spacing").AsDouble()
@@ -80,11 +80,11 @@ Lmin = unit_to_internal(doc, 4000)
 if L < Lmax: 
     n = 0
 else:
-    n = int(math.ceil((L + 0.3*Ls) / (Lmax + 1 - Ls)))
+    n = int(math.floor((L + 0.3*Ls) / (Lmax + 1 - Ls)))
 
 if n > 0:
 
-    # Calculate start and end bar lenght
+    # Calculate start and end bar length
     La = L-n*(Lmax-Ls)
     Lb = L-Lmin-(n-1)*Lmax+n*Ls
     if La < Lmin:
@@ -93,6 +93,9 @@ if n > 0:
     else:
       Lstart = La
       Lend = Lmax
+      
+    #print(unit_from_internal(doc, L), n, unit_from_internal(doc, Lmax), unit_from_internal(doc, Ls))
+    #print(unit_from_internal(doc, La), unit_from_internal(doc, Lb), unit_from_internal(doc, Lstart), unit_from_internal(doc, Lend))
       
     t = Transaction(doc, 'Create shifted splice rebar from original')
     t.Start()
@@ -119,31 +122,33 @@ if n > 0:
     rebar_2_0.LookupParameter("a").Set(Lend)
     
     ids_to_shift = [] # Every other rebar to shift one diameter in splice
+    
 
-    for i in range(n-1):
-        rebar_1_x_id = DB.ElementTransformUtils.CopyElement(doc,rebar_1_0.Id, dir_long * (Lstart + i * Lmax))[0]
+    for i in range(n - 1):
+        rebar_1_x_id = DB.ElementTransformUtils.CopyElement(doc,rebar_1_0.Id, dir_long * (Lstart - Ls + i * (Lmax - Ls)))[0]
         doc.GetElement(rebar_1_x_id).LookupParameter("a").Set(Lmax)
         
-        rebar_2_x_id = DB.ElementTransformUtils.CopyElement(doc,rebar_2_0.Id, dir_long * (Lend + i * Lmax))[0]
+        rebar_2_x_id = DB.ElementTransformUtils.CopyElement(doc,rebar_2_0.Id, dir_long * (Lend - Ls + i * (Lmax - Ls)))[0]
         doc.GetElement(rebar_2_x_id).LookupParameter("a").Set(Lmax)
         
-        if (i % 2) > 0: # Even numbers
+        if (i % 2) == 0: # Even numbers
             ids_to_shift.extend([rebar_1_x_id, rebar_2_x_id])    
 
     # Last bars  
     i += 1
       
-    rebar_1_1_id = DB.ElementTransformUtils.CopyElement(doc,rebar_1_0.Id, dir_long * (Lstart + i * Lmax))[0]
+    rebar_1_1_id = DB.ElementTransformUtils.CopyElement(doc,rebar_1_0.Id, dir_long * (Lstart - Ls + i * (Lmax - Ls)))[0]
     doc.GetElement(rebar_1_1_id).LookupParameter("a").Set(Lend)
     
-    rebar_2_1_id = DB.ElementTransformUtils.CopyElement(doc,rebar_2_0.Id, dir_long * (Lend + i * Lmax))[0]
+    rebar_2_1_id = DB.ElementTransformUtils.CopyElement(doc,rebar_2_0.Id, dir_long * (Lend - Ls + i * (Lmax - Ls)))[0]
     doc.GetElement(rebar_2_1_id).LookupParameter("a").Set(Lstart)
     
-    if (i % 2) > 0: # Even numbers
-        ids_to_shift.extend([rebar_1_1_id, rebar_2_1_id])    
+    if (i % 2) == 0: # Even numbers
+        ids_to_shift.extend([rebar_1_1_id, rebar_2_1_id])
     
     # Shift every other bar one diameter transversally
-    #DB.ElementTransformUtils.MoveElements(doc, List[DB.ElementId](ids_to_shift), dir_trans * d)
+    # DB.ElementTransformUtils.MoveElements(doc, List[DB.ElementId](ids_to_shift), dir_trans * d)
+    
     for i in ids_to_shift:
         DB.ElementTransformUtils.MoveElement(doc, i, dir_trans * d)
     
