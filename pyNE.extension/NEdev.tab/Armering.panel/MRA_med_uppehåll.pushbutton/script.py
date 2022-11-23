@@ -127,11 +127,14 @@ rebar_quantity_set = [parent_rebar]
 for b_ref in selection_child_rebar:
     b = doc.GetElement(b_ref)
     #only add rebar if they have the same rebar type, mark and spacing
-    if makeRebarString(b) == parent_rebar_string:
+    if makeRebarString(b) == parent_rebar_string and b.Id != parent_rebar.Id:
         dim_pts.append(projectedRebarDistributionPoints(b, dim_plane))
         rebar_quantity_set.append(b)
         #rebar_quantities.append(str(b.LookupParameter("Quantity").AsInteger()))
         ids_to_hide.append(b_ref.ElementId)
+
+#create copy of rebar id strings to append annotation ids to
+linked_ids = [x.ToString() for x in ids_to_hide]
 
 # check for outermost points on flattened list
 # to be used for opening dimline over the whole area
@@ -139,7 +142,6 @@ outer_pts = outerPoints(list(sum(dim_pts,())))
 
 #create quantity string
 rebar_quantities = getOrderedQuantities(rebar_quantity_set, dim_plane)
-print(rebar_quantities)
   
 #get detail item family for distribution lines               
 collector = DB.FilteredElementCollector(doc)\
@@ -161,18 +163,20 @@ mra_group_familytype = next(i for i in mra_collector if i.LookupParameter("Type 
 #remove parent bar points since they have multi-rebar annotation
 dim_pts.pop(0)
 
-t = Transaction(doc, 'Group MRA')   
+t = Transaction(doc, 'Group Multi-Rebar Annotations')   
 t.Start()
 
 #create distribution lines      
 for pts in dim_pts:
     (p1, p2) = pts
     dim_line = DB.Line.CreateBound(p1, p2)
-    doc.Create.NewFamilyInstance(dim_line, dist_family, active_view)
+    dline = doc.Create.NewFamilyInstance(dim_line, dist_family, active_view)
+    linked_ids.append(dline.Id.ToString())
 
 #create opening distribution line
 dim_line = DB.Line.CreateBound(outer_pts[0], outer_pts[1])
-doc.Create.NewFamilyInstance(dim_line, dist_opening_family, active_view)
+dline = doc.Create.NewFamilyInstance(dim_line, dist_opening_family, active_view)
+linked_ids.append(dline.Id.ToString())
 
 #create prefix string
 if allSame(rebar_quantities) and len(rebar_quantities)>2:
@@ -187,12 +191,16 @@ active_view.HideElements(List[DB.ElementId](ids_to_hide))
 #change mra type
 mra.ChangeTypeId(mra_group_familytype.Id)
 
+#set grouped object ids to parent rebar
+id_string = ','.join(linked_ids)
+parent_rebar.LookupParameter("Comments").Set(id_string)
+
 t.Commit()
 
 #   TODO
 #   Hantera avbryt
 #   Hantera tvärgående stänger = line too short
-##   Skriv id till huvudstång
+#   Skriv id till huvudstång
 #   Fel vid horisontella stänger
 #   Felmeddelande vid skippade stänger
 #   Script ungroup MRA
