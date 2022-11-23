@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Aligns dimension lines to first picked line"""
+"""Creates a Multi-Rebar Annotation "group" by adding fake dimension lines to associated rebar, connected by a dashed line"""
 
 __author__ = "Niklas Edlind"
 
@@ -8,10 +8,16 @@ import clr
 clr.AddReference("System")
 from System.Collections.Generic import List
 
+import sys
+
 from Autodesk.Revit import DB
 from Autodesk.Revit.DB import Transaction
 from Autodesk.Revit.UI.Selection import *
 from Autodesk.Revit.Creation import ItemFactoryBase
+
+from pyrevit import script
+
+logger = script.get_logger()
 
 uidoc = __revit__.ActiveUIDocument
 doc = uidoc.Document
@@ -90,12 +96,22 @@ def getOrderedQuantities(rebar_list, plane):
 def allSame(list):
     return all([x == list[0] for x in list])
         
-#prompt selection of dimension to align to
-selection_parent_mra = uidoc.Selection.PickObject(ObjectType.Element, CustomISelectionFilter("Multi-Rebar Annotations"),"Pick main Multi-Rebar Annotation")
+#prompt selection of main mra
+try:
+    selection_parent_mra = uidoc.Selection.PickObject(ObjectType.Element, CustomISelectionFilter("Multi-Rebar Annotations"),"Pick main Multi-Rebar Annotation")
+except Exception as err:
+    logger.debug(err)
+    sys.exit()
+    
 
-#prompt selection of dimensions to align
-selection_child_rebar = uidoc.Selection\
-    .PickObjects(ObjectType.Element, CustomISelectionFilter("Structural Rebar"),"Pick rebar to associate with main Multi-Rebar Annotation")\
+#prompt selection of rebar to group
+try:
+    selection_child_rebar = uidoc.Selection\
+        .PickObjects(ObjectType.Element, CustomISelectionFilter("Structural Rebar"),"Pick rebar to associate with main Multi-Rebar Annotation")
+except Exception as err:
+    logger.debug(err)
+    sys.exit()
+    
 
 view_dir = active_view.ViewDirection
 
@@ -198,9 +214,7 @@ parent_rebar.LookupParameter("Comments").Set(id_string)
 t.Commit()
 
 #   TODO
-#   Hantera avbryt
 #   Hantera tvärgående stänger = line too short
-#   Skriv id till huvudstång
 #   Fel vid horisontella stänger
 #   Felmeddelande vid skippade stänger
 #   Script ungroup MRA
