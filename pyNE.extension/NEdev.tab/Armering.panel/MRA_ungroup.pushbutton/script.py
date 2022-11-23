@@ -13,7 +13,6 @@ import sys
 from Autodesk.Revit import DB
 from Autodesk.Revit.DB import Transaction
 from Autodesk.Revit.UI.Selection import *
-from Autodesk.Revit.Creation import ItemFactoryBase
 
 from pyrevit import script
 
@@ -54,31 +53,21 @@ for b in rebar_collector:
         if el_id == selection_parent_mra.ElementId:
             parent_rebar = b
 
-            
-
 linked_id_string = parent_rebar.LookupParameter("Comments").AsString()
 linked_ids = [DB.ElementId(int(x)) for x in linked_id_string.split(',')]
 
-rebar_to_unhide = []
-dimlines_to_delete = []
+rebar_to_unhide = DB.FilteredElementCollector(doc, List[DB.ElementId](linked_ids)).OfCategory(DB.BuiltInCategory.OST_Rebar).ToElementIds()
+dimlines_to_delete = DB.FilteredElementCollector(doc, List[DB.ElementId](linked_ids)).OfCategory(DB.BuiltInCategory.OST_DetailComponents).ToElementIds()
 
-for i in linked_ids:
-    el = doc.GetElement(i)
-    cat = el.Category
-    
-    if cat == DB.BuiltInCategory.OST_Rebar:
-        rebar_to_unhide.append(i)
-    elif cat == DB.BuiltInCategory.OST_DetailComponents:
-        dimlines_to_delete.append(i)
-
+#get original MRA
 mra_collector = DB.FilteredElementCollector(doc)\
     .OfCategory(DB.BuiltInCategory.OST_MultiReferenceAnnotations)\
     .WhereElementIsElementType()\
     .ToElements()
      
-mra_group_familytype = next(i for i in mra_collector if i.LookupParameter("Type Name").AsString() == "Structural Rebar")     
+mra_group_familytype = next(i for i in mra_collector if i.LookupParameter("Type Name").AsString() == "Structural Rebar")    
 
-t = Transaction(doc, 'Group Multi-Rebar Annotations')   
+t = Transaction(doc, 'Ungroup Multi-Rebar Annotations')   
 t.Start()
 
 #delete distribution lines      
