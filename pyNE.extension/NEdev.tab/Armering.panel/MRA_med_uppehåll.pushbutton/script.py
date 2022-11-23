@@ -82,7 +82,8 @@ selection_child_rebar = uidoc.Selection\
 
 view_dir = active_view.ViewDirection
 
-parent_dim_id = doc.GetElement(selection_parent_mra).DimensionId
+mra = doc.GetElement(selection_parent_mra)
+parent_dim_id = mra.DimensionId
 parent_dim_crv = doc.GetElement(parent_dim_id).Curve
 op = parent_dim_crv.Origin
 crv_dir = parent_dim_crv.Direction
@@ -127,7 +128,14 @@ collector = DB.FilteredElementCollector(doc)\
     .ToElements()
      
 dist_family = next(i for i in collector if i.Family.Name == "NE_fördelningslinje")     
-dist_opening_family = next(i for i in collector if i.Family.Name == "NE_fördelningslinje_uppehåll")   
+dist_opening_family = next(i for i in collector if i.Family.Name == "NE_fördelningslinje_uppehåll")  
+
+mra_collector = DB.FilteredElementCollector(doc)\
+    .OfCategory(DB.BuiltInCategory.OST_MultiReferenceAnnotations)\
+    .WhereElementIsElementType()\
+    .ToElements()
+     
+mra_group_familytype = next(i for i in mra_collector if i.LookupParameter("Type Name").AsString() == "Structural Rebar 2")     
 
 #remove parent bar points since they have multi-rebar annotation
 dim_pts.pop(0)
@@ -145,24 +153,29 @@ for pts in dim_pts:
 dim_line = DB.Line.CreateBound(outer_pts[0], outer_pts[1])
 doc.Create.NewFamilyInstance(dim_line, dist_opening_family, active_view)
 
-#create prfix string
+#create prefix string
 prefix = '+'.join(rebar_quantities) + '+'
 parent_rebar.LookupParameter("CQRebarPrefix").Set(prefix)
 
 #hide grouped rebar
 active_view.HideElements(List[DB.ElementId](ids_to_hide))
 
+#change mra type
+mra.ChangeTypeId(mra_group_familytype.Id)
+
 t.Commit()
 
 #   TODO
 #   Selection order = Prefix order? eller ordning från vänster till höger?
-#   Byt familj på MRA?
 #   Hantera avbryt
 #   Hantera tvärgående stänger = line too short
 #   Lägg till antal på huvudstång
 #   Skriv id till huvudstång
 #   Fel vid horisontella stänger
 #   Felmeddelande vid skippade stänger
+#   Script ungroup MRA
+#   Script update MRA group
+#   Hantera show first/last
    
 
 
