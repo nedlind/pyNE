@@ -41,10 +41,13 @@ def makeRebarString(rebar):
 def uvToXyz(uv, plane):
     return plane.Origin + uv.U * plane.XVec + uv.V * plane.YVec
 
+def rebarLocation(rebar):
+    b_curves = rebar.GetCenterlineCurves(0,1,1,0,0)
+    return b_curves[0].GetEndPoint(0)  
+
 def projectedRebarDistributionPoints(rebar, plane):
         #create translation to rebar orgigin (distribution path is relative)
-        b_curves = rebar.GetCenterlineCurves(0,1,1,0,0)
-        b_point = b_curves[0].GetEndPoint(0)  
+        b_point = rebarLocation(rebar)
         transform = DB.Transform.CreateTranslation(DB.XYZ(b_point.X, b_point.Y, 0))    
     
         distribution_path = rebar.GetShapeDrivenAccessor().GetDistributionPath().CreateTransformed(transform)
@@ -73,6 +76,20 @@ def outerPoints(pts):
                 outer_pts = p1, p2
     return outer_pts
 
+def getOrderedQuantities(rebar_list, plane):
+    uv_list = []
+    for b in rebar_list:
+        location = rebarLocation(b)
+        projected = plane.Project(location)[0]
+        quantity = str(b.LookupParameter("Quantity").AsInteger())
+        uv_list.append((quantity, projected.U, projected.V))
+    
+    uv_sorted = sorted(uv_list, key = lambda tup: tup[1])
+    return [x[0] for x in uv_sorted]
+
+def allSame(list):
+    return all([x == list[0] for x in list])
+        
 #prompt selection of dimension to align to
 selection_parent_mra = uidoc.Selection.PickObject(ObjectType.Element, CustomISelectionFilter("Multi-Rebar Annotations"),"Pick main Multi-Rebar Annotation")
 
@@ -104,21 +121,25 @@ dim_pts = [projectedRebarDistributionPoints(parent_rebar, dim_plane)]
 #create rebar string to check for similarity
 parent_rebar_string = makeRebarString(parent_rebar)
 
-rebar_quantities = []
 ids_to_hide = []
+rebar_quantity_set = [parent_rebar]
 
 for b_ref in selection_child_rebar:
     b = doc.GetElement(b_ref)
     #only add rebar if they have the same rebar type, mark and spacing
     if makeRebarString(b) == parent_rebar_string:
         dim_pts.append(projectedRebarDistributionPoints(b, dim_plane))
-        rebar_quantities.append(str(b.LookupParameter("Quantity").AsInteger()))
+        rebar_quantity_set.append(b)
+        #rebar_quantities.append(str(b.LookupParameter("Quantity").AsInteger()))
         ids_to_hide.append(b_ref.ElementId)
 
 # check for outermost points on flattened list
 # to be used for opening dimline over the whole area
 outer_pts = outerPoints(list(sum(dim_pts,())))
 
+#create quantity string
+rebar_quantities = getOrderedQuantities(rebar_quantity_set, dim_plane)
+print(rebar_quantities)
   
 #get detail item family for distribution lines               
 collector = DB.FilteredElementCollector(doc)\
@@ -154,7 +175,10 @@ dim_line = DB.Line.CreateBound(outer_pts[0], outer_pts[1])
 doc.Create.NewFamilyInstance(dim_line, dist_opening_family, active_view)
 
 #create prefix string
-prefix = '+'.join(rebar_quantities) + '+'
+if allSame(rebar_quantities) and len(rebar_quantities)>2:
+    prefix = str(len(rebar_quantities)) + "x" + rebar_quantities[0]
+else:
+    prefix = '+'.join(rebar_quantities)
 parent_rebar.LookupParameter("CQRebarPrefix").Set(prefix)
 
 #hide grouped rebar
@@ -166,11 +190,9 @@ mra.ChangeTypeId(mra_group_familytype.Id)
 t.Commit()
 
 #   TODO
-#   Selection order = Prefix order? eller ordning från vänster till höger?
 #   Hantera avbryt
 #   Hantera tvärgående stänger = line too short
-#   Lägg till antal på huvudstång
-#   Skriv id till huvudstång
+##   Skriv id till huvudstång
 #   Fel vid horisontella stänger
 #   Felmeddelande vid skippade stänger
 #   Script ungroup MRA
