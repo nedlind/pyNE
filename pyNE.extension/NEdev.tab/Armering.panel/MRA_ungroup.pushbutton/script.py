@@ -79,9 +79,11 @@ active_view.UnhideElements(List[DB.ElementId](rebar_to_unhide))
 #change mra type
 mra.ChangeTypeId(mra_group_familytype.Id)
 
-#set grouped object ids to parent rebar
-id_string = ""
-parent_rebar.LookupParameter("Comments").Set(id_string)
+#clear linked ids from parent rebar
+parent_rebar.LookupParameter("Comments").Set("")
+
+#clear quantities from parent rebar
+parent_rebar.LookupParameter("CQRebarPrefix").Set("")
 
 t.Commit()
 
