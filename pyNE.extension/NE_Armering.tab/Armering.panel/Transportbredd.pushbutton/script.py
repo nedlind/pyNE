@@ -3,7 +3,7 @@
 __author__ = "Niklas Edlind"
 
 from Autodesk.Revit import DB
-from Autodesk.Revit.DB import Structure, UnitUtils
+from Autodesk.Revit.DB import UnitUtils, LabelUtils
 from Autodesk.Revit.UI.Selection import *
 from pyrevit import script
 
@@ -73,9 +73,25 @@ for sel in stirrup_selection:
             dist.append(d)
             
         dims.append(max(dist))
-			
-    #print(unit_from_internal(doc, min(dims)))
+
     transport_widths.append((sel.ElementId, min(dims)))
-    
+
+#unit symmbol
+if int(doc.Application.VersionNumber) < 2022:
+    pass
+else:
+    format_options = doc.GetUnits().GetFormatOptions(DB.SpecTypeId.Length)
+    unit_id = format_options.GetUnitTypeId()
+    if unit_id.Empty(): symbol = ""
+    else: unit = LabelUtils.GetLabelForUnit(unit_id)
+
+if unit == "Meters":
+    dec_format = '{:.3f}'
+    symbol = 'm'
+elif unit == "Millimeters":
+    dec_format = '{:.0f}'
+    symbol = 'mm'
+else: dec_format = '{:.3f}'
+
 for t in transport_widths:
-    print('{} {} m'.format(output.linkify(t[0]), t[1]))
+    print('{} {} {}'.format(output.linkify(t[0]), dec_format.format(unit_from_internal(doc, t[1])), symbol))
