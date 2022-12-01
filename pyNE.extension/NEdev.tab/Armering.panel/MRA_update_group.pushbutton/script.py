@@ -159,8 +159,8 @@ collector = DB.FilteredElementCollector(doc)\
     .WhereElementIsElementType()\
     .ToElements()
      
-dist_family = next(i for i in collector if i.Family.Name == "NE_fördelningslinje")     
-dist_opening_family = next(i for i in collector if i.Family.Name == "NE_fördelningslinje_uppehåll")  
+dist_family = next(i for i in collector if i.Family.Name == "ELU_fördelningslinje")     
+dist_opening_family = next(i for i in collector if i.Family.Name == "ELU_fördelningslinje_uppehåll")  
 
 t = Transaction(doc, 'Ungroup Multi-Rebar Annotations')   
 t.Start()

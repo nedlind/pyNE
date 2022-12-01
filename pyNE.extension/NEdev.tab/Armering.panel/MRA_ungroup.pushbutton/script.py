@@ -65,7 +65,7 @@ mra_collector = DB.FilteredElementCollector(doc)\
     .WhereElementIsElementType()\
     .ToElements()
      
-mra_group_familytype = next(i for i in mra_collector if i.LookupParameter("Type Name").AsString() == "Structural Rebar")    
+mra_group_familytype = next(i for i in mra_collector if i.LookupParameter("Type Name").AsString() == "ELU_Littera - 3.5 - Multirebar Tag ex 5Ø8 s300-B5")    
 
 t = Transaction(doc, 'Ungroup Multi-Rebar Annotations')   
 t.Start()

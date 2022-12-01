@@ -166,15 +166,15 @@ collector = DB.FilteredElementCollector(doc)\
     .WhereElementIsElementType()\
     .ToElements()
      
-dist_family = next(i for i in collector if i.Family.Name == "NE_fördelningslinje")     
-dist_opening_family = next(i for i in collector if i.Family.Name == "NE_fördelningslinje_uppehåll")  
+dist_family = next(i for i in collector if i.Family.Name == "ELU_fördelningslinje")     
+dist_opening_family = next(i for i in collector if i.Family.Name == "ELU_fördelningslinje_uppehåll")  
 
 mra_collector = DB.FilteredElementCollector(doc)\
     .OfCategory(DB.BuiltInCategory.OST_MultiReferenceAnnotations)\
     .WhereElementIsElementType()\
     .ToElements()
      
-mra_group_familytype = next(i for i in mra_collector if i.LookupParameter("Type Name").AsString() == "Structural Rebar 2")     
+mra_group_familytype = next(i for i in mra_collector if i.LookupParameter("Type Name").AsString() == "ELU_Littera - 3.5 - Multirebar Tag ex 5Ø8 s300-B5 (grupperad)")     
 
 #remove parent bar points since they have multi-rebar annotation
 dim_pts.pop(0)
