@@ -1,0 +1,5 @@
+title : Align Multi Rebar Annotation
+tooltip: Alignar taggen i en Multi Rebar Annotation med den synliga armeringsstången samt justerar leaderlinjen till att ligga med en liten offset från stångänden
+author: Niklas Edlind
+
+context : OST_MultiReferenceAnnotations
