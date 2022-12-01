@@ -182,16 +182,26 @@ dim_pts.pop(0)
 t = Transaction(doc, 'Group Multi-Rebar Annotations')   
 t.Start()
 
+if dist_family.IsActive == False:
+    dist_family.Activate()
+    doc.Regenerate()
+
+if dist_opening_family.IsActive == False:
+    dist_opening_family.Activate()
+    doc.Regenerate()
+
 #create distribution lines      
 for pts in dim_pts:
     (p1, p2) = pts
     dim_line = DB.Line.CreateBound(p1, p2)
-    dline = doc.Create.NewFamilyInstance(dim_line, dist_family, active_view)
+    detail_line = doc.Create.NewDetailCurve(active_view, dim_line)
+    dline = doc.Create.NewFamilyInstance(detail_line.GeometryCurve, dist_family, active_view)
     linked_ids.append(dline.Id.ToString())
 
 #create opening distribution line
 dim_line = DB.Line.CreateBound(outer_pts[0], outer_pts[1])
-dline = doc.Create.NewFamilyInstance(dim_line, dist_opening_family, active_view)
+detail_line = doc.Create.NewDetailCurve(active_view, dim_line)
+dline = doc.Create.NewFamilyInstance(detail_line.GeometryCurve, dist_opening_family, active_view)
 linked_ids.append(dline.Id.ToString())
 
 #create prefix string
