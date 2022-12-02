@@ -193,7 +193,7 @@ if ids_to_unhide:
 
 #set grouped object ids to parent rebar
 id_string = ','.join([x.ToString() for x in linked_ids])
-parent_rebar.LookupParameter("Comments").Set(id_string)
+parent_rebar.LookupParameter("ELU_Referens").Set(id_string)
 
 t.Commit()
 

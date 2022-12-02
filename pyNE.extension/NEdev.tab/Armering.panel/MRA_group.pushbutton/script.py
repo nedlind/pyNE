@@ -174,7 +174,7 @@ mra_collector = DB.FilteredElementCollector(doc)\
     .WhereElementIsElementType()\
     .ToElements()
      
-mra_group_familytype = next(i for i in mra_collector if i.LookupParameter("Type Name").AsString() == "ELU_Littera - 3.5 - Multirebar Tag ex 5Ø8 s300-B5 (grupperad)")     
+mra_group_familytype = next(i for i in mra_collector if i.LookupParameter("Type Name").AsString() == "ELU_Littera - 3.5 - Multirebar Tag ex. 5+5 -B8 (grupperad)")     
 
 #remove parent bar points since they have multi-rebar annotation
 dim_pts.pop(0)
@@ -219,7 +219,7 @@ mra.ChangeTypeId(mra_group_familytype.Id)
 
 #set grouped object ids to parent rebar
 id_string = ','.join(linked_ids)
-parent_rebar.LookupParameter("Comments").Set(id_string)
+parent_rebar.LookupParameter("ELU_Referens").Set(id_string)
 
 t.Commit()
 

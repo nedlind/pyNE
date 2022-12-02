@@ -53,7 +53,7 @@ for b in rebar_collector:
         if el_id == selection_parent_mra.ElementId:
             parent_rebar = b
 
-linked_id_string = parent_rebar.LookupParameter("Comments").AsString()
+linked_id_string = parent_rebar.LookupParameter("ELU_Referens").AsString()
 linked_ids = [DB.ElementId(int(x)) for x in linked_id_string.split(',')]
 
 rebar_to_unhide = DB.FilteredElementCollector(doc, List[DB.ElementId](linked_ids)).OfCategory(DB.BuiltInCategory.OST_Rebar).ToElementIds()
