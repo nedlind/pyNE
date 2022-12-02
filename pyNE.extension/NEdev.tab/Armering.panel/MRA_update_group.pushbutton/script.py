@@ -120,7 +120,7 @@ for b in rebar_collector:
         if el_id == selection_parent_mra.ElementId:
             parent_rebar = b
 
-linked_id_string = parent_rebar.LookupParameter("Comments").AsString()
+linked_id_string = parent_rebar.LookupParameter("ELU_Referens").AsString()
 linked_ids = [DB.ElementId(int(x)) for x in linked_id_string.split(',')]
 
 rebar_to_update = DB.FilteredElementCollector(doc, List[DB.ElementId](linked_ids)).OfCategory(DB.BuiltInCategory.OST_Rebar).ToElementIds()
@@ -172,12 +172,16 @@ doc.Delete(List[DB.ElementId](dimlines_to_delete))
 for pts in dim_pts:
     (p1, p2) = pts
     dim_line = DB.Line.CreateBound(p1, p2)
-    dline = doc.Create.NewFamilyInstance(dim_line, dist_family, active_view)
+    detail_line = doc.Create.NewDetailCurve(active_view, dim_line)
+    dline = doc.Create.NewFamilyInstance(detail_line.GeometryCurve, dist_family, active_view)
+    doc.Delete(detail_line.Id)
     linked_ids.append(dline.Id)
 
 #create opening distribution line
 dim_line = DB.Line.CreateBound(outer_pts[0], outer_pts[1])
-dline = doc.Create.NewFamilyInstance(dim_line, dist_opening_family, active_view)
+detail_line = doc.Create.NewDetailCurve(active_view, dim_line)
+dline = doc.Create.NewFamilyInstance(detail_line.GeometryCurve, dist_family, active_view)
+doc.Delete(detail_line.Id)
 linked_ids.append(dline.Id)
 
 #create prefix string

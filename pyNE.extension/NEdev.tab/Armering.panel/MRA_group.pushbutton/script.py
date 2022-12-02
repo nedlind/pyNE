@@ -174,7 +174,7 @@ mra_collector = DB.FilteredElementCollector(doc)\
     .WhereElementIsElementType()\
     .ToElements()
      
-mra_group_familytype = next(i for i in mra_collector if i.LookupParameter("Type Name").AsString() == "ELU_Littera - 3.5 - Multirebar Tag ex. 5+5 -B8 (grupperad)")     
+mra_group_familytype = next(i for i in mra_collector if i.LookupParameter("Type Name").AsString() == "ELU_Littera - 3.5 - Multirebar Tag ex 5+5Ø8 s300-B5 (grupperad)")     
 
 #remove parent bar points since they have multi-rebar annotation
 dim_pts.pop(0)
@@ -196,12 +196,14 @@ for pts in dim_pts:
     dim_line = DB.Line.CreateBound(p1, p2)
     detail_line = doc.Create.NewDetailCurve(active_view, dim_line)
     dline = doc.Create.NewFamilyInstance(detail_line.GeometryCurve, dist_family, active_view)
+    doc.Delete(detail_line.Id)
     linked_ids.append(dline.Id.ToString())
 
 #create opening distribution line
 dim_line = DB.Line.CreateBound(outer_pts[0], outer_pts[1])
 detail_line = doc.Create.NewDetailCurve(active_view, dim_line)
 dline = doc.Create.NewFamilyInstance(detail_line.GeometryCurve, dist_opening_family, active_view)
+doc.Delete(detail_line.Id)
 linked_ids.append(dline.Id.ToString())
 
 #create prefix string
