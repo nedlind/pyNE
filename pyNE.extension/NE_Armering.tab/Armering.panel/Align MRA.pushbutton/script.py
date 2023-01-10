@@ -74,13 +74,11 @@ for mra, bar in tagged_bars:
             
             tag.Location.Move(new_xyz - old_xyz)
             
-            if int(doc.Application.VersionNumber) > 2022:
+            if int(doc.Application.VersionNumber) > 2022:   #API change in Revit 2023
                 tag.SetLeaderElbow(tag.GetTaggedReferences()[0], elbow_xyz)
             else:
                 tag.LeaderElbow = elbow_xyz
                 
             t.Commit()
             
-            
-# TODO add functionality to set leader elbow position with tag.LeaderElbow(xyz)
 			
