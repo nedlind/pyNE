@@ -30,7 +30,10 @@ def tagEnd(rebar_tag, bar_reference, point):
     tag = DB.IndependentTag.Create(doc, active_view_id, bar_reference, True, DB.TagMode.TM_ADDBY_CATEGORY, DB.TagOrientation.Horizontal, point)
     tag.ChangeTypeId(rebar_tag.Id)
     tag.LeaderEndCondition = DB.LeaderEndCondition.Free
-    tag.LeaderEnd = point
+    if int(doc.Application.VersionNumber) > 2022:   #API change in Revit 2023
+        tag.SetLeaderEnd(tag.GetTaggedReferences()[0], point)
+    else:
+        tag.LeaderEnd = point
 
 tags = DB.FilteredElementCollector(doc)\
                         .OfCategory(DB.BuiltInCategory.OST_RebarTags)\
@@ -64,18 +67,22 @@ for bar_ref in stirrup_selection:
             sp = b_curves[0].CreateTransformed(transform).GetEndPoint(0)
             ep = b_curves[len(b_curves)-1].CreateTransformed(transform).GetEndPoint(1)
     
-            #DB.IndependentTag.Create(doc, rebar_tag.Id, active_view_id, DB.Reference(bar), True, DB.TagOrientation.Horizontal, sp)
-            # DB.IndependentTag.Create(doc, active_view_id, bar_ref, True, DB.TagMode.TM_ADDBY_CATEGORY, DB.TagOrientation.Horizontal, sp).ChangeTypeId(rebar_tag.Id)
-            # DB.IndependentTag.Create(doc, active_view_id, bar_ref, True, DB.TagMode.TM_ADDBY_CATEGORY, DB.TagOrientation.Horizontal, ep).ChangeTypeId(rebar_tag.Id)
-            
-            tagEnd(rebar_tag, bar_ref, sp)
-            tagEnd(rebar_tag, bar_ref, ep)
+# IList<Subelement> subelements = rebar.GetSubelements(); // here are the subelements
+# foreach(var subelement in subelements)
+# {
+# IndependentTag tag = IndependentTag.Create(m_rvtDoc, m_view.Id, subelement.GetReference()    
+            if int(doc.Application.VersionNumber) > 2022:   #API change in Revit 2023
+                subelement = bar.GetSubelements()[i].GetReference()
+                tagEnd(rebar_tag, subelement, sp)
+                tagEnd(rebar_tag, subelement, ep)
+            else:
+                tagEnd(rebar_tag, bar_ref, sp)
+                tagEnd(rebar_tag, bar_ref, ep)
             
             break
                                
 t.Commit()
             
 #   TODO
-#   Create icon
 #   Allow script to run from selection of rebar and/or mra tag
 			
