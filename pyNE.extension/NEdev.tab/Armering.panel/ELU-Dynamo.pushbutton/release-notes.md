@@ -6,6 +6,10 @@
 
 - Fix: Uppdaterad till att fungera med Revit 2023 (ID: 2)
 
+*0617_Tag_cut_bars*
+
+- Fix: Uppdaterad till att fungera med Revit 2023
+
 ## Tidigare versioner
 
 ### 0.1
