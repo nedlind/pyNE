@@ -10,6 +10,10 @@
 
 - Fix: Uppdaterad till att fungera med Revit 2023
 
+*0618_Tag_ends*
+
+- Fix: Uppdaterad till att fungera med Revit 2023
+
 ## Tidigare versioner
 
 ### 0.1
