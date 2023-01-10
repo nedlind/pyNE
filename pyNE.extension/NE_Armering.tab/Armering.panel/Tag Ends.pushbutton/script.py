@@ -66,11 +66,7 @@ for bar_ref in stirrup_selection:
             
             sp = b_curves[0].CreateTransformed(transform).GetEndPoint(0)
             ep = b_curves[len(b_curves)-1].CreateTransformed(transform).GetEndPoint(1)
-    
-# IList<Subelement> subelements = rebar.GetSubelements(); // here are the subelements
-# foreach(var subelement in subelements)
-# {
-# IndependentTag tag = IndependentTag.Create(m_rvtDoc, m_view.Id, subelement.GetReference()    
+ 
             if int(doc.Application.VersionNumber) > 2022:   #API change in Revit 2023
                 subelement = bar.GetSubelements()[i].GetReference()
                 tagEnd(rebar_tag, subelement, sp)

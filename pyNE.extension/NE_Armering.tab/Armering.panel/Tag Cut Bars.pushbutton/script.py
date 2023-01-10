@@ -31,7 +31,10 @@ def tagEnd(rebar_tag, bar_reference, point):
     tag = DB.IndependentTag.Create(doc, active_view_id, bar_reference, True, DB.TagMode.TM_ADDBY_CATEGORY, DB.TagOrientation.Horizontal, point)
     tag.ChangeTypeId(rebar_tag.Id)
     tag.LeaderEndCondition = DB.LeaderEndCondition.Free
-    tag.LeaderEnd = point
+    if int(doc.Application.VersionNumber) > 2022:   #API change in Revit 2023
+        tag.SetLeaderEnd(tag.GetTaggedReferences()[0], point)
+    else:
+        tag.LeaderEnd = point
 
 tags = DB.FilteredElementCollector(doc)\
                         .OfCategory(DB.BuiltInCategory.OST_RebarTags)\
@@ -66,7 +69,11 @@ for bar_ref in stirrup_selection:
         
         sp = b_curves[0].CreateTransformed(transform).GetEndPoint(0)
         
-        tagEnd(rebar_tag, bar_ref, sp)
+        if int(doc.Application.VersionNumber) > 2022:   #API change in Revit 2023
+            subelement = bar.GetSubelements()[bar_index].GetReference()
+            tagEnd(rebar_tag, subelement, sp)
+        else:
+            tagEnd(rebar_tag, bar_ref, sp)
                                
 t.Commit()
             
