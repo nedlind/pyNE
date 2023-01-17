@@ -2,6 +2,7 @@
 
 __author__ = "Niklas Edlind"
 
+import sys
 from Autodesk.Revit import DB
 from Autodesk.Revit.DB import Transaction
 from Autodesk.Revit.UI.Selection import *
@@ -24,10 +25,14 @@ class CustomISelectionFilter(ISelectionFilter):
         return False
 
 #prompt selection of dimension to align to
-selection_parent = uidoc.Selection.PickObject(ObjectType.Element, CustomISelectionFilter("Dimensions"),"Pick dimension to align to")
+try:
+    selection_parent = uidoc.Selection.PickObject(ObjectType.Element, CustomISelectionFilter("Dimensions"),"Pick dimension to align to")
+except: sys.exit("User abort")
 
 #prompt selection of dimensions to align
-selection_children = uidoc.Selection.PickObjects(ObjectType.Element, CustomISelectionFilter("Dimensions"),"Pick dimensions to align")
+try:
+    selection_children = uidoc.Selection.PickObjects(ObjectType.Element, CustomISelectionFilter("Dimensions"),"Pick dimensions to align")
+except: sys.exit("User abort")
 
 view_dir = active_view.ViewDirection
 

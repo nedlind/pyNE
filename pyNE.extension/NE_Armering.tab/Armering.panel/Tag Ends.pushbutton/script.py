@@ -2,7 +2,7 @@
 
 __author__ = "Niklas Edlind"
 
-#from operator import index
+import sys
 from Autodesk.Revit import DB
 from Autodesk.Revit.DB import Transaction
 from pyrevit import forms
@@ -46,12 +46,15 @@ tag_names = [tag.FamilyName + tag.get_Parameter(DB.BuiltInParameter.SYMBOL_NAME_
                        
 sel_tag = forms.SelectFromList.show(tag_names, button_name='Select Item')
 
-if sel_tag:
-    rebar_tag = tags[tag_names.index(sel_tag)]
+if not sel_tag: sys.exit("User abort")
+
+rebar_tag = tags[tag_names.index(sel_tag)]
     
     
 #prompt selection of dimension to align to
-stirrup_selection = uidoc.Selection.PickObjects(ObjectType.Element, CustomISelectionFilter("Structural Rebar"),"Pick rebar to tag")
+try:
+    stirrup_selection = uidoc.Selection.PickObjects(ObjectType.Element, CustomISelectionFilter("Structural Rebar"),"Pick rebar to tag")
+except: sys.exit("User abort")
 
 t = Transaction(doc, 'Tag Rebar Ends')
 t.Start()
