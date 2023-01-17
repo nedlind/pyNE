@@ -15,6 +15,17 @@ active_view = doc.GetElement(active_view_id)
 #get selected objects - non-MRAs will be filtered out in comparison with rebar-dependants
 selection_ids = uidoc.Selection.GetElementIds()
 
+#replace MRA tag and dimension-IDs with MRA ID
+mra_ids =[]
+for i, sel_id in enumerate(selection_ids):
+    elem = doc.GetElement(sel_id)
+    if elem.Category.Name == "Structural Rebar Tags":
+        try:
+            mra_id = elem.MultiReferenceAnnotationId
+            mra_ids.append(mra_id)
+        except: pass
+    else: mra_ids.append(sel_id)
+
 #get all rebar in active view
 rebar_collector = DB.FilteredElementCollector(doc, active_view_id)\
     .OfCategory(DB.BuiltInCategory.OST_Rebar)
@@ -26,7 +37,7 @@ tagged_bars = []
 
 for b in rebar_collector:
     for el_id in b.GetDependentElements(DB.ElementCategoryFilter(DB.BuiltInCategory.OST_MultiReferenceAnnotations)):
-        if el_id in selection_ids:
+        if el_id in mra_ids:
             tagged_bars.append((doc.GetElement(el_id), doc.GetElement(b.Id)))
 
 view_dir = active_view.ViewDirection
