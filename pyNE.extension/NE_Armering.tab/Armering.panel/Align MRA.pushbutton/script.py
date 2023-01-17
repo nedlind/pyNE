@@ -30,6 +30,9 @@ for b in rebar_collector:
             tagged_bars.append((doc.GetElement(el_id), doc.GetElement(b.Id)))
 
 view_dir = active_view.ViewDirection
+     
+t = Transaction(doc, 'Align Multi-Rebar Annotation')
+t.Start()
             
 for mra, bar in tagged_bars:
     for i in range(bar.NumberOfBarPositions):
@@ -68,10 +71,7 @@ for mra, bar in tagged_bars:
             nearest_xyz = b_pts[min_index]
             
             elbow_xyz = nearest_xyz + (new_xyz-nearest_xyz).Normalize().Multiply(elbow_offset)
-            
-            t = Transaction(doc, 'Align Multi-Rebar Annotation')
-            t.Start()
-            
+                       
             tag.Location.Move(new_xyz - old_xyz)
             
             if int(doc.Application.VersionNumber) > 2022:   #API change in Revit 2023
@@ -79,6 +79,6 @@ for mra, bar in tagged_bars:
             else:
                 tag.LeaderElbow = elbow_xyz
                 
-            t.Commit()
+t.Commit()
             
 			
