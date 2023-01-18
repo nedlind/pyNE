@@ -2,6 +2,7 @@
 
 __author__ = "Niklas Edlind"
 
+import sys
 from Autodesk.Revit import DB
 from Autodesk.Revit.DB import UnitUtils, LabelUtils
 from Autodesk.Revit.UI.Selection import *
@@ -40,7 +41,9 @@ def unit_from_internal(doc, value):
         return UnitUtils.ConvertFromInternalUnits(value, um)
 
 #prompt selection of dimension to align to
-stirrup_selection = uidoc.Selection.PickObjects(ObjectType.Element, CustomISelectionFilter("Structural Rebar"),"Pick stirrup to check")
+try:
+    stirrup_selection = uidoc.Selection.PickObjects(ObjectType.Element, CustomISelectionFilter("Structural Rebar"),"Pick stirrup to check")
+except: sys.exit("User abort")
 
 transport_widths = []
 

@@ -15,6 +15,17 @@ active_view = doc.GetElement(active_view_id)
 #get selected objects - non-MRAs will be filtered out in comparison with rebar-dependants
 selection_ids = uidoc.Selection.GetElementIds()
 
+#replace MRA tag and dimension-IDs with MRA ID
+mra_ids =[]
+for i, sel_id in enumerate(selection_ids):
+    elem = doc.GetElement(sel_id)
+    if elem.Category.Name == "Structural Rebar Tags":
+        try:
+            mra_id = elem.MultiReferenceAnnotationId
+            mra_ids.append(mra_id)
+        except: pass
+    else: mra_ids.append(sel_id)
+
 #get all rebar in active view
 rebar_collector = DB.FilteredElementCollector(doc, active_view_id)\
     .OfCategory(DB.BuiltInCategory.OST_Rebar)
@@ -26,10 +37,13 @@ tagged_bars = []
 
 for b in rebar_collector:
     for el_id in b.GetDependentElements(DB.ElementCategoryFilter(DB.BuiltInCategory.OST_MultiReferenceAnnotations)):
-        if el_id in selection_ids:
+        if el_id in mra_ids:
             tagged_bars.append((doc.GetElement(el_id), doc.GetElement(b.Id)))
 
 view_dir = active_view.ViewDirection
+     
+t = Transaction(doc, 'Align Multi-Rebar Annotation')
+t.Start()
             
 for mra, bar in tagged_bars:
     for i in range(bar.NumberOfBarPositions):
@@ -68,10 +82,7 @@ for mra, bar in tagged_bars:
             nearest_xyz = b_pts[min_index]
             
             elbow_xyz = nearest_xyz + (new_xyz-nearest_xyz).Normalize().Multiply(elbow_offset)
-            
-            t = Transaction(doc, 'Align Multi-Rebar Annotation')
-            t.Start()
-            
+                       
             tag.Location.Move(new_xyz - old_xyz)
             
             if int(doc.Application.VersionNumber) > 2022:   #API change in Revit 2023
@@ -79,6 +90,6 @@ for mra, bar in tagged_bars:
             else:
                 tag.LeaderElbow = elbow_xyz
                 
-            t.Commit()
+t.Commit()
             
 			

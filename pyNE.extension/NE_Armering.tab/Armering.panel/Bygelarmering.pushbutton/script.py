@@ -2,6 +2,7 @@
 
 __author__ = "Niklas Edlind"
 
+import sys
 from Autodesk.Revit import DB
 from Autodesk.Revit.DB import Transaction, Structure
 from Autodesk.Revit.UI.Selection import *
@@ -38,7 +39,10 @@ def getRebarBends(rebar, pos, offset):
     return pt_list
 
 #prompt selection of dimension to align to
-stirrup_selection = uidoc.Selection.PickObject(ObjectType.Element, CustomISelectionFilter("Structural Rebar"),"Pick stirrup to to place bend rebar in")
+try:
+    stirrup_selection = uidoc.Selection.PickObject(ObjectType.Element, CustomISelectionFilter("Structural Rebar"),"Pick stirrup to to place bend rebar in")
+except: sys.exit("User abort")
+
 stirrup = doc.GetElement(stirrup_selection.ElementId)
 
 host = doc.GetElement(stirrup.GetHostId())
