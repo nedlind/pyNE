@@ -1,0 +1,14 @@
+title: Kontroll armering
+tooltip: >-
+  Kontrollerar om vald armering uppfyller krav på:
+
+  - Minsta delmått
+
+  - Maxlängd
+
+  - Max transportbredd
+
+  - Standard bockningsradie
+
+  Kontrollmått definieras i armering_kontrollmått_std.json
+author: Niklas Edlind
