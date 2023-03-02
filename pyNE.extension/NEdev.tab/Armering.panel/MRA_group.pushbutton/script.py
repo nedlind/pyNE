@@ -95,7 +95,29 @@ def getOrderedQuantities(rebar_list, plane):
 
 def allSame(list):
     return all([x == list[0] for x in list])
-        
+     
+#get detail item families for distribution lines               
+collector = DB.FilteredElementCollector(doc)\
+    .OfCategory(DB.BuiltInCategory.OST_DetailComponents)\
+    .OfClass(DB.FamilySymbol)\
+    .WhereElementIsElementType()\
+    .ToElements()
+     
+dist_family = next((i for i in collector if i.Family.Name == "ELU_fördelningslinje"), None)     
+dist_opening_family = next((i for i in collector if i.Family.Name == "ELU_fördelningslinje_uppehåll"), None)  
+
+#get mra family
+mra_collector = DB.FilteredElementCollector(doc)\
+    .OfCategory(DB.BuiltInCategory.OST_MultiReferenceAnnotations)\
+    .WhereElementIsElementType()\
+    .ToElements()
+     
+mra_group_familytype = next((i for i in mra_collector if i.LookupParameter("Type Name").AsString() == "ELU_Littera - 3.5 - Multirebar Tag ex 5+5Ø8 s300-B5 (grupperad)"), None)     
+
+if not (mra_group_familytype or dist_family or dist_opening_family):
+    print("Family not found.")
+    sys.exit()
+    
 #prompt selection of main mra
 try:
     selection_parent_mra = uidoc.Selection.PickObject(ObjectType.Element, CustomISelectionFilter("Multi-Rebar Annotations"),"Pick main Multi-Rebar Annotation")
@@ -158,23 +180,6 @@ outer_pts = outerPoints(list(sum(dim_pts,())))
 
 #create quantity string
 rebar_quantities = getOrderedQuantities(rebar_quantity_set, dim_plane)
-  
-#get detail item family for distribution lines               
-collector = DB.FilteredElementCollector(doc)\
-    .OfCategory(DB.BuiltInCategory.OST_DetailComponents)\
-    .OfClass(DB.FamilySymbol)\
-    .WhereElementIsElementType()\
-    .ToElements()
-     
-dist_family = next(i for i in collector if i.Family.Name == "ELU_fördelningslinje")     
-dist_opening_family = next(i for i in collector if i.Family.Name == "ELU_fördelningslinje_uppehåll")  
-
-mra_collector = DB.FilteredElementCollector(doc)\
-    .OfCategory(DB.BuiltInCategory.OST_MultiReferenceAnnotations)\
-    .WhereElementIsElementType()\
-    .ToElements()
-     
-mra_group_familytype = next(i for i in mra_collector if i.LookupParameter("Type Name").AsString() == "ELU_Littera - 3.5 - Multirebar Tag ex 5+5Ø8 s300-B5 (grupperad)")     
 
 #remove parent bar points since they have multi-rebar annotation
 dim_pts.pop(0)
