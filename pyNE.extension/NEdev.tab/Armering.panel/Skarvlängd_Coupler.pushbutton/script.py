@@ -4,6 +4,7 @@ import clr
 from Autodesk.Revit.UI.Selection import *
 from Autodesk.Revit.DB import Transaction, Structure
 from Autodesk.Revit import DB
+from pyrevit import EXEC_PARAMS
 import System
 
 """Lägger till coupler på vald armering för att visuellt granska skarvlängder"""
@@ -49,44 +50,69 @@ def addCoupler(id):
                 doc, coupler_dict[bar_diam], rebarData, None)
 
 
-# get coupler family
+coupler_name = "Skarvlängd (Coupler)"
 
-collector = DB.FilteredElementCollector(doc)\
-    .OfCategory(DB.BuiltInCategory.OST_Coupler)\
-    .OfClass(DB.FamilySymbol)\
-    .WhereElementIsElementType()\
-    .Where(lambda e: e.Family.Name.Equals("Skarvlängd (Coupler)"))
+# shift-click delete placed couplers
+if EXEC_PARAMS.config_mode:
+    rebar = DB.FilteredElementCollector(
+        doc, active_view_id).OfCategory(DB.BuiltInCategory.OST_Rebar)
 
-if collector.Count <= 0:
-    t = Transaction(doc, 'Load skarvlängd-coupler')
+    to_delete = []
+
+    for r in rebar:
+        for i in [0, 1]:
+            existing_coupler_id = r.GetCouplerId(i)
+            if existing_coupler_id.IntegerValue > 0:
+                existing_coupler = doc.GetElement(existing_coupler_id)
+                if doc.GetElement(existing_coupler.GetTypeId()).Family.Name == coupler_name:
+                    to_delete.append(existing_coupler_id)
+
+    t = Transaction(doc, 'Ta bort Skarvlängd-coupler')
     t.Start()
-    test = doc.LoadFamily(
-        "t:/05_Personliga_mappar/Niklas_Edlind/test/Skarvlängd (Coupler).rfa")
+
+    for e in to_delete:
+        doc.Delete(e)
+
     t.Commit()
+
+else:
+    # get coupler family
+
     collector = DB.FilteredElementCollector(doc)\
         .OfCategory(DB.BuiltInCategory.OST_Coupler)\
         .OfClass(DB.FamilySymbol)\
         .WhereElementIsElementType()\
-        .Where(lambda e: e.Family.Name.Equals("Skarvlängd (Coupler)"))
+        .Where(lambda e: e.Family.Name.Equals(coupler_name))
 
-coupler_dict = {}
+    if collector.Count <= 0:
+        t = Transaction(doc, 'Load skarvlängd-coupler')
+        t.Start()
+        test = doc.LoadFamily(
+            "t:/05_Personliga_mappar/Niklas_Edlind/test/Skarvlängd (Coupler).rfa")
+        t.Commit()
+        collector = DB.FilteredElementCollector(doc)\
+            .OfCategory(DB.BuiltInCategory.OST_Coupler)\
+            .OfClass(DB.FamilySymbol)\
+            .WhereElementIsElementType()\
+            .Where(lambda e: e.Family.Name.Equals(coupler_name))
 
-for i in collector:
-    if i.Family.Name == "Skarvlängd (Coupler)":
-        bar_type_id = i.Parameter[DB.BuiltInParameter.COUPLER_MAIN_BAR_SIZE].AsElementId(
-        )
-        diam = doc.GetElement(bar_type_id).BarModelDiameter
-        coupler_dict[diam] = i.Id
+    coupler_dict = {}
 
+    for i in collector:
+        if i.Family.Name == coupler_name:
+            bar_type_id = i.Parameter[DB.BuiltInParameter.COUPLER_MAIN_BAR_SIZE].AsElementId(
+            )
+            diam = doc.GetElement(bar_type_id).BarModelDiameter
+            coupler_dict[diam] = i.Id
 
-# prompt selection of rebar
-selection_rebar = uidoc.Selection.PickObjects(ObjectType.Element, CustomISelectionFilter(
-    "Structural Rebar"), "Välj armering att lägga till skarvlängdscoupler på")
+    # prompt selection of rebar
+    selection_rebar = uidoc.Selection.PickObjects(ObjectType.Element, CustomISelectionFilter(
+        "Structural Rebar"), "Välj armering att lägga till skarvlängdscoupler på")
 
-t = Transaction(doc, 'Skarvlängd-coupler')
-t.Start()
+    t = Transaction(doc, 'Skarvlängd-coupler')
+    t.Start()
 
-for s in selection_rebar:
-    addCoupler(s.ElementId)
+    for s in selection_rebar:
+        addCoupler(s.ElementId)
 
-t.Commit()
+    t.Commit()

@@ -1,3 +1,6 @@
 title: Skarvlängd
-tooltip: Lägger till skarvhylsa på vald armering för kontroll av skarvlängd
+tooltip: >-
+  Lägger till skarvhylsa på vald armering för kontroll av skarvlängd
+
+  SHIFT-klick tar bort alla skarvlängdshylsor från armering synlig i aktiv vy,
 author: Niklas Edlind
