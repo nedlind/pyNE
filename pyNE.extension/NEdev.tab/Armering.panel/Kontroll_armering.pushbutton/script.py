@@ -68,7 +68,7 @@ def check_bend_radius(bend_radius, diameter, material):
         if bend_radius == std_bend_radius:
             return None
 
-    return ":warning: Bockningsradie är inte enligt standard: Ø" + diameter + ", " + material + ", R=" + str(bend_radius)
+    return ":warning: Ej standardkombination av diameter, material och bockningsradie: Ø" + diameter + ", " + material + ", R=" + str(bend_radius)
 
 
 def get_transport_width(rebar):
