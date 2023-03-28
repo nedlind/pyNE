@@ -59,6 +59,18 @@ def check_max_length(length):
         return None
 
 
+def check_bend_radius(bend_radius, diameter, material):
+    dict = checkdata["bend_radius"]
+    chk_lst = [dict[t] for t in dict]
+
+    for c in chk_lst:
+        std_bend_radius = c.get(material, {}).get(diameter)
+        if bend_radius == std_bend_radius:
+            return None
+
+    return ":warning: Bockningsradie är inte enligt standard: Ø" + diameter + ", " + material + ", R=" + str(bend_radius)
+
+
 def get_transport_width(rebar):
 
     bar_type = doc.GetElement(bar.GetTypeId())
@@ -114,27 +126,27 @@ def check_transport_width(width):
 
 
 def check_end_leg(leg_length, diam, bend_radius):
-    try:
-        minlength = checkdata["end_leg"][str(diam)][str(bend_radius)]
-    except:
-        return ":cross_mark:" + str(bend_radius) + " är inte standard bockningsradie för Ø" + str(diam)
+    minlength = bend_radius + 3*diam + 25
     if leg_length < minlength:
-        return ":cross_mark: Ändskänkelmått " + '{:.0f}'.format(leg_length) + " < " + str(minlength)
+        return ":cross_mark: Ändskänkelmått " + '{:.0f}'.format(leg_length) + " < " + '{:.0f}'.format(float(minlength))
     else:
         return None
 
 
-def check_mid_leg(leg_length, diam, bend_radius):
-    try:
-        minlength = checkdata["mid_leg"][str(diam)][str(bend_radius)]
-    except:
-        return ":cross_mark:" + str(bend_radius) + " är inte standard bockningsradie för Ø" + str(diam)
+def check_mid_leg(leg_length, diam, radius1, radius2):
+    minlength = radius1 + radius2 + 3*diam + 25
     if leg_length < minlength:
-        return ":cross_mark: Delmått " + '{:.0f}'.format(leg_length) + " < " + str(minlength)
+        return ":cross_mark: Delmått " + '{:.0f}'.format(leg_length) + " < " + '{:.0f}'.format(float(minlength))
     else:
         return None
 
-        # TODO: Hantera key error (= kombinationen av diameter och bockningsradie är icke-standard)
+
+def check_hairpin(outer_diam, bar_diam):
+    min_outer_diam = bar_diam*4
+    if outer_diam < min_outer_diam:
+        return ":cross_mark: Höjdmått " + '{:.0f}'.format(outer_diam) + " < " + '{:.0f}'.format(float(min_outer_diam))
+    else:
+        return None
 
 
 def get_leg_length(line_len, delta_0, delta_1):
@@ -146,6 +158,35 @@ def get_delta_length(angle, radius, diam):
         return radius + diam
     else:
         return (radius + diam) * math.tan(angle/2)
+
+
+def check_coupler(leg_length, diam, bend_radius, n_bend, coupler):
+    if n_bend < 1:  # No check for straight bars
+        return None
+    elif n_bend == 1:
+        bend_key = "1"
+    else:
+        bend_key = "2+"
+    coupler_data = checkdata["end_leg_coupler"]
+    coupler_names = list(coupler_data.keys())
+    coupler_key = None
+    for n in coupler_names:
+        if n in coupler:
+            coupler_key = n
+    if not coupler_key:
+        print(coupler)
+        return ":warning: Skarvhylsa " + coupler + " okänd"
+    try:
+        minlength = coupler_data[coupler_key][bend_key][str(
+            diam)][str(bend_radius)]
+        dL = coupler_data[coupler_key]["dL"][str(diam)]
+    except:
+        return ":warning: Ø" + str(diam) + ", R=" + str(bend_radius) + " ej standard"
+
+    if leg_length + dL < minlength:
+        return ":warning: Ändskänkelmått med hylsa " + '{:.0f}'.format(leg_length + dL) + " < " + str(minlength)
+    else:
+        return None
 
 
 # get data for minimum leg lengths
@@ -173,6 +214,7 @@ for sel in bar_selection:
 
     bar_type = doc.GetElement(bar.GetTypeId())
     diam = int(unit_from_internal(doc, bar_type.BarModelDiameter))
+    mat = bar_type.LookupParameter("Material").AsValueString()
     bend_radius = int(unit_from_internal(
         doc, bar_type.StandardBendDiameter) / 2)
 
@@ -183,6 +225,11 @@ for sel in bar_selection:
     radii = []
     previous_line = None
 
+    # check std bend radius
+    check = check_bend_radius(bend_radius, str(diam), mat)
+    if check:
+        bar_errors.add(check)
+
     # check transport width
     transport_width = unit_from_internal(doc, get_transport_width(bar))
     if EXEC_PARAMS.debug_mode:
@@ -191,62 +238,92 @@ for sel in bar_selection:
     if check:
         bar_errors.add(check)
 
+    # check max length
     if len(bar_curves) == 1:
         check = check_max_length(unit_from_internal(doc, bar_curves[0].Length))
         if check:
-            errors[eid] = [check]
-        continue
+            bar_errors.add(check)
 
-    for crv in bar_curves:
-        line_type = crv.GetType().ToString()
-        if "Line" in line_type:
-            line_len.append(unit_from_internal(doc, crv.Length))
-            if previous_line:
-                line_dir = crv.Direction
-                prev_line_dir = previous_line.Direction
-                angles.append(line_dir.AngleTo(prev_line_dir))
-            previous_line = crv
-        if "Arc" in line_type:
-            radii.append(unit_from_internal(doc, crv.Radius) - diam/2)
+    else:
 
-    # check first leg
-    dl = get_delta_length(angles[0], bend_radius, diam)
-    leg_length = get_leg_length(
-        line_len[0], 0, dl)
-    check = check_end_leg(leg_length, diam, bend_radius)
-    if check:
-        bar_errors.add(check)
+        for crv in bar_curves:
+            line_type = crv.GetType().ToString()
+            if "Line" in line_type:
+                line_len.append(unit_from_internal(doc, crv.Length))
+                if previous_line:
+                    line_dir = crv.Direction
+                    prev_line_dir = previous_line.Direction
+                    angles.append(line_dir.AngleTo(prev_line_dir))
+                previous_line = crv
+            if "Arc" in line_type:
+                radii.append(unit_from_internal(doc, crv.Radius) - diam/2)
 
-    if EXEC_PARAMS.debug_mode:
-        print(leg_length)
-    dl_prev = dl
-
-    # check mid legs
-    for i in range(1, len(line_len)-1):
-        dl = get_delta_length(angles[i], bend_radius, diam)
+        # check first leg
+        dl = get_delta_length(angles[0], radii[0], diam)
         leg_length = get_leg_length(
-            line_len[i], dl_prev, dl)
-        check = check_mid_leg(leg_length, diam, bend_radius)
+            line_len[0], 0, dl)
+
+        treatment = bar.LookupParameter(
+            "End Treatment At Start").AsValueString()
+
+        if treatment not in ["None", "Threaded", "Gängad"]:
+            n_bend = len(line_len) - 1
+            check = check_coupler(
+                leg_length, diam, bend_radius, n_bend, treatment)
+        else:
+            check = check_end_leg(leg_length, diam, max(
+                bend_radius, radii[0]-diam/2))  # Qarmering räknar vid cirkelbågar med radien till mittlinjen
         if check:
             bar_errors.add(check)
-        dl_prev = dl
 
         if EXEC_PARAMS.debug_mode:
             print(leg_length)
+        dl_prev = dl
 
-    # check last leg
-    leg_length = get_leg_length(
-        line_len[-1], dl_prev, 0)
-    check = check_end_leg(leg_length, diam, bend_radius)
-    if check:
-        bar_errors.add(check)
-    if EXEC_PARAMS.debug_mode:
-        print(leg_length)
+        # check mid legs
+        for i in range(1, len(line_len)-1):
+            dl = get_delta_length(angles[i], radii[i], diam)
+            leg_length = get_leg_length(
+                line_len[i], dl_prev, dl)
+            check = check_mid_leg(leg_length, diam, max(
+                bend_radius, radii[i-1]-diam/2), max(bend_radius, radii[i]-diam/2))
+            if check:
+                bar_errors.add(check)
+            dl_prev = dl
+
+            if EXEC_PARAMS.debug_mode:
+                print(leg_length)
+
+        # check last leg
+        # dl = get_delta_length(angles[-1], radii[-1], diam)
+        leg_length = get_leg_length(
+            line_len[-1], 0, dl)
+
+        treatment = bar.LookupParameter(
+            "End Treatment At End").AsValueString()
+
+        if treatment not in ["None", "Threaded", "Gängad"]:
+            n_bend = len(line_len) - 1
+            check = check_coupler(
+                leg_length, diam, bend_radius, n_bend, treatment)
+        else:
+            check = check_end_leg(leg_length, diam, max(
+                bend_radius, radii[-1]-diam/2))  # Qarmering räknar vid cirkelbågar med radien till mittlinjen
+        if check:
+            bar_errors.add(check)
+        if EXEC_PARAMS.debug_mode:
+            print(leg_length)
+
+        for i, r in enumerate(radii):
+            if angles[i] >= math.pi:
+                check = check_hairpin(2*r + 2*diam, diam)
+                if check:
+                    bar_errors.add(check)
 
     if len(bar_errors) > 0:
         errors[eid] = bar_errors
 
-# unit symmbol
+# unit symbol
 if int(doc.Application.VersionNumber) < 2022:
     pass
 else:
