@@ -2,7 +2,7 @@
 
 """Opens views and activates workset from saved settings"""
 
-from pyrevit import script, EXEC_PARAMS
+from pyrevit import script, EXEC_PARAMS, forms
 __author__ = "Niklas Edlind"
 
 import sys
@@ -31,6 +31,8 @@ if EXEC_PARAMS.config_mode:
 
     view_list = [v.ViewId.IntegerValue for v in uidoc.GetOpenUIViews()]
 
+    n_views = len(view_list)
+
     if doc.IsWorkshared:
         ws_table = doc.GetWorksetTable()
         active_ws = ws_table.GetActiveWorksetId().IntegerValue
@@ -44,6 +46,9 @@ if EXEC_PARAMS.config_mode:
 
     with open(settings_file_path, "w") as outfile:
         json.dump(settings, outfile)
+
+    message = str(n_views) + " views and active workset saved."
+    forms.toast(message, title=rvt_file_name, appid="Egna Vyer")
 
 # load saved environment on click
 
