@@ -6,6 +6,7 @@ from Autodesk.Revit.DB import Transaction, Structure
 from Autodesk.Revit import DB
 from pyrevit import EXEC_PARAMS
 import System
+import os
 
 """Lägger till coupler på vald armering för att visuellt granska skarvlängder"""
 
@@ -85,10 +86,11 @@ else:
         .Where(lambda e: e.Family.Name.Equals(coupler_name))
 
     if collector.Count <= 0:
+        absolute_path = os.path.dirname(__file__)
+        fam_path = os.path.join(absolute_path, "Skarvlängd (Coupler).rfa")
         t = Transaction(doc, 'Load skarvlängd-coupler')
         t.Start()
-        test = doc.LoadFamily(
-            "t:/05_Personliga_mappar/Niklas_Edlind/test/Skarvlängd (Coupler).rfa")
+        test = doc.LoadFamily(fam_path)
         t.Commit()
         collector = DB.FilteredElementCollector(doc)\
             .OfCategory(DB.BuiltInCategory.OST_Coupler)\
