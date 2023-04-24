@@ -2,14 +2,19 @@
 
 """Opens views and activates workset from saved settings"""
 
+from Autodesk.Revit import DB
+import json
+import os
+import sys
+from System.Collections.Generic import List
+from Autodesk.Revit.DB import Transaction
 from pyrevit import script, EXEC_PARAMS, forms
 __author__ = "Niklas Edlind"
 
-import sys
-import os
-import json
+import clr
+clr.AddReference("System")
 
-from Autodesk.Revit import DB
+
 uidoc = __revit__.ActiveUIDocument
 doc = uidoc.Document
 
@@ -31,6 +36,19 @@ if EXEC_PARAMS.config_mode:
 
     view_list = [v.ViewId.IntegerValue for v in uidoc.GetOpenUIViews()]
 
+    temp_views = []
+
+    for v in view_list:
+        view = doc.GetElement(DB.ElementId(v))
+
+        if view.IsTemporaryHideIsolateActive():
+            collector = DB.FilteredElementCollector(doc, DB.ElementId(v))
+            visible = []
+            for e in collector:
+                if view.IsElementVisibleInTemporaryViewMode(DB.TemporaryViewMode.TemporaryHideIsolate, e.Id):
+                    visible.append(e.Id.IntegerValue)
+            temp_views.append([v, visible])
+
     n_views = len(view_list)
 
     if doc.IsWorkshared:
@@ -41,7 +59,8 @@ if EXEC_PARAMS.config_mode:
 
     settings = {
         "open_views": view_list,
-        "active_ws": active_ws
+        "active_ws": active_ws,
+        "temp_views": temp_views
     }
 
     with open(settings_file_path, "w") as outfile:
@@ -63,6 +82,17 @@ else:
             if ws:
                 ws_table = doc.GetWorksetTable()
                 ws_table.SetActiveWorksetId(DB.WorksetId(ws))
+            temp_views = settings["temp_views"]
+            if len(temp_views) > 0:
+                t = Transaction(doc, 'Reapply Temporary Hide Isolate')
+                t.Start()
+                for v in temp_views:
+                    view = doc.GetElement(DB.ElementId(v[0]))
+                    elem_list = List[DB.ElementId]()
+                    for e in v[1]:
+                        elem_list.Add(DB.ElementId(e))
+                    view.IsolateElementsTemporary(elem_list)
+                t.Commit()
 
     else:
         print(":magnifying_glass_tilted_left: Inga sparade inställningar hittas. Använd SHIFT-klick på kommandot för att spara öppna vyer och aktivt workset för aktivt projekt.")
